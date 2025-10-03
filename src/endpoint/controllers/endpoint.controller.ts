@@ -1,0 +1,53 @@
+import { Controller, Post, Delete, Body, Param, UseGuards } from '@nestjs/common'
+import { CreateEndpointUseCase } from '../usecases/create-endpoint.usecase'
+import { AddEndpointToGroupUseCase } from '../usecases/add-endpoint-to-group.usecase'
+import { RemoveEndpointFromGroupUseCase } from '../usecases/remove-endpoint-from-group.usecase'
+import { DeleteEndpointUseCase } from '../usecases/delete-endpoint.usecase'
+import { CreateEndpointDto } from '../dto/create-endpoint.dto'
+import { AddEndpointToGroupDto } from '../dto/add-endpoint-to-group.dto'
+import { RemoveEndpointFromGroupDto } from '../dto/remove-endpoint-from-group.dto'
+import { EndpointEntity } from '../entities/endpoint.entity'
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
+import { AdminGuard } from '../../auth/guards/admin.guard'
+
+@Controller('endpoint')
+export class EndpointController {
+  constructor(
+    private readonly createEndpointUseCase: CreateEndpointUseCase,
+    private readonly addEndpointToGroupUseCase: AddEndpointToGroupUseCase,
+    private readonly removeEndpointFromGroupUseCase: RemoveEndpointFromGroupUseCase,
+    private readonly deleteEndpointUseCase: DeleteEndpointUseCase,
+  ) {}
+
+  @Post('create')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async createEndpoint(@Body() createEndpointDto: CreateEndpointDto): Promise<EndpointEntity> {
+    return this
+      .createEndpointUseCase
+      .execute(createEndpointDto)
+  }
+
+  @Post('add-to-group')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async addEndpointToGroup(@Body() addEndpointToGroupDto: AddEndpointToGroupDto): Promise<{ message: string }> {
+    return this
+      .addEndpointToGroupUseCase
+      .execute(addEndpointToGroupDto)
+  }
+
+  @Post('remove-from-group')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async removeEndpointFromGroup(@Body() removeEndpointFromGroupDto: RemoveEndpointFromGroupDto): Promise<{ message: string }> {
+    return this
+      .removeEndpointFromGroupUseCase
+      .execute(removeEndpointFromGroupDto)
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async deleteEndpoint(@Param('id') id: string): Promise<{ message: string }> {
+    return this
+      .deleteEndpointUseCase
+      .execute(id)
+  }
+}

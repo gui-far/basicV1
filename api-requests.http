@@ -731,17 +731,384 @@ Authorization: Bearer {{groupRegularUserToken}}
 ###
 
 ### ===============================================
+### 11. ENDPOINT ENDPOINTS
+### ===============================================
+
+### 11.1 Create Endpoint - Complete Flow
+
+### Step 1: Create admin user (first user, auto admin)
+# @name endpointAdminSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "endpointadmin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### Step 2: Admin signs in
+# @name endpointAdminSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "endpointadmin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### Step 3: Extract admin token
+@endpointAdminToken = {{endpointAdminSignin.response.body.accessToken}}
+@endpointAdminUserId = {{endpointAdminSignin.response.body.userId}}
+
+###
+
+### Step 4: Create a regular user
+# @name endpointRegularUserSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "endpointuser@example.com",
+  "password": "user123"
+}
+
+###
+
+### Step 5: Regular user signs in
+# @name endpointRegularUserSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "endpointuser@example.com",
+  "password": "user123"
+}
+
+###
+
+### Step 6: Extract regular user token and ID
+@endpointRegularUserToken = {{endpointRegularUserSignin.response.body.accessToken}}
+@endpointRegularUserId = {{endpointRegularUserSignin.response.body.userId}}
+
+###
+
+### 11.2 Create Endpoint as Admin (Success - 201)
+# @name createEndpoint
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": "Get all users",
+  "path": "/api/users",
+  "method": "GET",
+  "isPublic": false
+}
+
+###
+
+### Step 7: Extract endpoint ID
+@endpointId = {{createEndpoint.response.body.id}}
+
+###
+
+### 11.3 Create Another Endpoint (Success - 201)
+# @name createEndpoint2
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": "Create user",
+  "path": "/api/users",
+  "method": "POST",
+  "isPublic": false
+}
+
+###
+
+@endpointId2 = {{createEndpoint2.response.body.id}}
+
+###
+
+### 11.4 Create Public Endpoint (Success - 201)
+# @name createPublicEndpoint
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": "Public health check",
+  "path": "/api/health",
+  "method": "GET",
+  "isPublic": true
+}
+
+###
+
+@publicEndpointId = {{createPublicEndpoint.response.body.id}}
+
+###
+
+### 11.5 Create Endpoint - No Token (401 Unauthorized)
+POST {{baseUrl}}/endpoint/create
+Content-Type: {{contentType}}
+
+{
+  "description": "Test endpoint",
+  "path": "/api/test",
+  "method": "GET",
+  "isPublic": false
+}
+
+###
+
+### 11.6 Create Endpoint - Non-Admin (403 Forbidden)
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{endpointRegularUserToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": "Test endpoint",
+  "path": "/api/test",
+  "method": "GET",
+  "isPublic": false
+}
+
+###
+
+### 11.7 Create Endpoint - Missing Fields (400 Bad Request)
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": ""
+}
+
+###
+
+### ===============================================
+### 12. ADD ENDPOINT TO GROUP
+### ===============================================
+
+### 12.1 Create Group for Endpoint Tests
+# @name createGroupForEndpoint
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "API Access Group"
+}
+
+###
+
+@endpointGroupId = {{createGroupForEndpoint.response.body.id}}
+
+###
+
+### 12.2 Add Endpoint to Group as Admin (Success - 201)
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 12.3 Add Endpoint to Group - Already in Group (409 Conflict)
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 12.4 Add Endpoint to Group - Endpoint Not Found (404 Not Found)
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "non-existent-endpoint-id",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 12.5 Add Endpoint to Group - Group Not Found (404 Not Found)
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "non-existent-group-id"
+}
+
+###
+
+### 12.6 Add Endpoint to Group - No Token (401 Unauthorized)
+POST {{baseUrl}}/endpoint/add-to-group
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 12.7 Add Endpoint to Group - Non-Admin (403 Forbidden)
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{endpointRegularUserToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### ===============================================
+### 13. REMOVE ENDPOINT FROM GROUP
+### ===============================================
+
+### 13.1 Remove Endpoint from Group as Admin (Success - 201)
+POST {{baseUrl}}/endpoint/remove-from-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 13.2 Remove Endpoint from Group - Endpoint Not in Group (404 Not Found)
+POST {{baseUrl}}/endpoint/remove-from-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 13.3 Remove Endpoint from Group - No Token (401 Unauthorized)
+POST {{baseUrl}}/endpoint/remove-from-group
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 13.4 Remove Endpoint from Group - Non-Admin (403 Forbidden)
+POST {{baseUrl}}/endpoint/remove-from-group
+Authorization: Bearer {{endpointRegularUserToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### ===============================================
+### 14. DELETE ENDPOINT
+### ===============================================
+
+### 14.1 Delete Endpoint with No Groups (Success - 200)
+DELETE {{baseUrl}}/endpoint/{{publicEndpointId}}
+Authorization: Bearer {{endpointAdminToken}}
+
+###
+
+### 14.2 Add Endpoint to Group (for delete with groups test)
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 14.3 Delete Endpoint with Groups (400 Bad Request)
+DELETE {{baseUrl}}/endpoint/{{endpointId}}
+Authorization: Bearer {{endpointAdminToken}}
+
+###
+
+### 14.4 Remove Endpoint from Group (for successful delete)
+POST {{baseUrl}}/endpoint/remove-from-group
+Authorization: Bearer {{endpointAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{endpointId}}",
+  "groupId": "{{endpointGroupId}}"
+}
+
+###
+
+### 14.5 Delete Endpoint Successfully (200 OK)
+DELETE {{baseUrl}}/endpoint/{{endpointId}}
+Authorization: Bearer {{endpointAdminToken}}
+
+###
+
+### 14.6 Delete Endpoint - Endpoint Not Found (404 Not Found)
+DELETE {{baseUrl}}/endpoint/non-existent-endpoint-id
+Authorization: Bearer {{endpointAdminToken}}
+
+###
+
+### 14.7 Delete Endpoint - No Token (401 Unauthorized)
+DELETE {{baseUrl}}/endpoint/{{endpointId2}}
+
+###
+
+### 14.8 Delete Endpoint - Non-Admin (403 Forbidden)
+DELETE {{baseUrl}}/endpoint/{{endpointId2}}
+Authorization: Bearer {{endpointRegularUserToken}}
+
+###
+
+### ===============================================
 ### NOTES:
 ### ===============================================
 ###
 ### Expected Responses:
-### - 201: User created successfully (signup), resource created (group, membership)
-### - 200: Success with data (signin, signout, set-admin, delete group)
-### - 400: Validation error (bad request, group has users)
+### - 201: User created successfully (signup), resource created (group, membership, endpoint)
+### - 200: Success with data (signin, signout, set-admin, delete group, delete endpoint)
+### - 400: Validation error (bad request, group has users, endpoint has groups)
 ### - 401: Unauthorized (invalid credentials or token)
 ### - 403: Forbidden (non-admin trying to access admin endpoint)
-### - 404: Not Found (user, group, or membership not found)
-### - 409: Conflict (duplicate email, group name, or membership)
+### - 404: Not Found (user, group, membership, endpoint not found)
+### - 409: Conflict (duplicate email, group name, membership, or endpoint-group relation)
 ###
 ### Admin Functionality:
 ### - First user to signup automatically becomes admin
@@ -749,6 +1116,9 @@ Authorization: Bearer {{groupRegularUserToken}}
 ### - Only admins can create groups
 ### - Only admins can add/remove users to/from groups
 ### - Only admins can delete groups (only if group has no users)
+### - Only admins can create endpoints
+### - Only admins can add/remove endpoints to/from groups
+### - Only admins can delete endpoints (only if endpoint not in any groups)
 ### - Admin status is included in JWT tokens (isAdmin field)
 ###
 ### Group Functionality:
@@ -758,13 +1128,21 @@ Authorization: Bearer {{groupRegularUserToken}}
 ### - Groups can only be deleted if they have no users
 ### - Many-to-many relationship via UserGroup junction table
 ###
+### Endpoint Functionality:
+### - Endpoints have description, path, method, and isPublic fields
+### - One endpoint can be in multiple groups
+### - One group can have multiple endpoints
+### - Endpoints can only be deleted if they are not in any groups
+### - Many-to-many relationship via GroupEndpoint junction table
+###
 ### Tips:
 ### 1. Run requests in order for integration flow
-### 2. Variables (@accessToken, @adminToken, @groupId) are auto-saved between requests
+### 2. Variables (@accessToken, @adminToken, @groupId, @endpointId) are auto-saved between requests
 ### 3. Use "# @name" to reference responses in other requests
 ### 4. Check the response panel for detailed error messages
 ### 5. Server must be running before sending requests
 ### 6. User IDs are now returned in signin response (userId field)
 ### 7. Group IDs are returned when creating groups
+### 8. Endpoint IDs are returned when creating endpoints
 ###
 ### ===============================================

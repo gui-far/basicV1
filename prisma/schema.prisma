@@ -27,11 +27,12 @@ model User {
 }
 
 model Group {
-  id         String      @id @default(uuid())
-  name       String      @unique
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  userGroups UserGroup[]
+  id            String          @id @default(uuid())
+  name          String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  userGroups    UserGroup[]
+  groupEndpoints GroupEndpoint[]
 
   @@map("groups")
 }
@@ -47,4 +48,30 @@ model UserGroup {
 
   @@unique([userId, groupId])
   @@map("user_groups")
+}
+
+model Endpoint {
+  id            String          @id @default(uuid())
+  description   String
+  path          String
+  method        String
+  isPublic      Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  groupEndpoints GroupEndpoint[]
+
+  @@map("endpoints")
+}
+
+model GroupEndpoint {
+  id         String   @id @default(uuid())
+  groupId    String
+  endpointId String
+  createdAt  DateTime @default(now())
+
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  endpoint Endpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, endpointId])
+  @@map("group_endpoints")
 }
