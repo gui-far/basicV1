@@ -6,6 +6,7 @@ import { CreateEndpointUseCase } from './usecases/create-endpoint.usecase'
 import { AddEndpointToGroupUseCase } from './usecases/add-endpoint-to-group.usecase'
 import { RemoveEndpointFromGroupUseCase } from './usecases/remove-endpoint-from-group.usecase'
 import { DeleteEndpointUseCase } from './usecases/delete-endpoint.usecase'
+import { ListEndpointsUseCase } from './usecases/list-endpoints.usecase'
 import { JwtStrategy } from '../auth/strategies/jwt.strategy'
 
 @Module({
@@ -20,6 +21,7 @@ import { JwtStrategy } from '../auth/strategies/jwt.strategy'
     AddEndpointToGroupUseCase,
     RemoveEndpointFromGroupUseCase,
     DeleteEndpointUseCase,
+    ListEndpointsUseCase,
     JwtStrategy,
   ],
 })

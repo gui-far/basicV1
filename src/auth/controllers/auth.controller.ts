@@ -1,8 +1,9 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common'
+import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common'
 import { SignupUseCase } from '../usecases/signup.usecase'
 import { SigninUseCase } from '../usecases/signin.usecase'
 import { SignoutUseCase } from '../usecases/signout.usecase'
 import { SetAdminUseCase } from '../usecases/set-admin.usecase'
+import { ListUsersUseCase, ListUsersResponse } from '../usecases/list-users.usecase'
 import { SignupDto } from '../dto/signup.dto'
 import { SigninDto } from '../dto/signin.dto'
 import { SetAdminDto } from '../dto/set-admin.dto'
@@ -17,6 +18,7 @@ export class AuthController {
     private readonly signinUseCase: SigninUseCase,
     private readonly signoutUseCase: SignoutUseCase,
     private readonly setAdminUseCase: SetAdminUseCase,
+    private readonly listUsersUseCase: ListUsersUseCase,
   ) {}
 
   @Public()
@@ -48,5 +50,13 @@ export class AuthController {
     return this
       .setAdminUseCase
       .execute(setAdminDto)
+  }
+
+  @UseGuards(AdminGuard)
+  @Get('users')
+  async listUsers(): Promise<ListUsersResponse[]> {
+    return this
+      .listUsersUseCase
+      .execute()
   }
 }

@@ -6,6 +6,7 @@ import { SignupUseCase } from './usecases/signup.usecase'
 import { SigninUseCase } from './usecases/signin.usecase'
 import { SignoutUseCase } from './usecases/signout.usecase'
 import { SetAdminUseCase } from './usecases/set-admin.usecase'
+import { ListUsersUseCase } from './usecases/list-users.usecase'
 import { JwtStrategy } from './strategies/jwt.strategy'
 
 @Module({
@@ -20,6 +21,7 @@ import { JwtStrategy } from './strategies/jwt.strategy'
     SigninUseCase,
     SignoutUseCase,
     SetAdminUseCase,
+    ListUsersUseCase,
     JwtStrategy,
   ],
 })

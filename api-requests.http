@@ -1450,6 +1450,39 @@ Authorization: Bearer {{accessUser1Token}}
 ###
 
 ### ===============================================
+### 16. LIST ENDPOINTS (PROMPT 010)
+### ===============================================
+
+### 16.1 List All Users (Admin Only)
+GET {{baseUrl}}/auth/users
+Authorization: Bearer {{accessAdminToken}}
+
+###
+
+### 16.2 List All Groups (Admin Only)
+GET {{baseUrl}}/group
+Authorization: Bearer {{groupAdminToken}}
+
+###
+
+### 16.3 List All Endpoints (Admin Only)
+GET {{baseUrl}}/endpoint
+Authorization: Bearer {{endpointAdminToken}}
+
+###
+
+### 16.4 List Users - No Token (401 Unauthorized)
+GET {{baseUrl}}/auth/users
+
+###
+
+### 16.5 List Users - Non-Admin (403 Forbidden)
+GET {{baseUrl}}/auth/users
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+### ===============================================
 ### NOTES:
 ### ===============================================
 ###
@@ -1507,5 +1540,24 @@ Authorization: Bearer {{accessUser1Token}}
 ### 8. Endpoint IDs are returned when creating endpoints
 ### 9. Test endpoint access control by trying to access endpoints with different user tokens
 ### 10. The guard checks: isPublic → user role → group membership dynamically
+###
+### ===============================================
+
+### ===============================================
+### 17. GET GROUP DETAILS
+### ===============================================
+### Description: Get detailed information about a specific group including assigned users and endpoints
+### This endpoint returns the group with all its related users and endpoints
+
+### 17.1 Get Group Details (Admin Only)
+GET {{baseUrl}}/group/{{groupId}}
+Authorization: Bearer {{accessAdminToken}}
+
+### Note: Replace {{groupId}} with an actual group ID from previous requests
+### The response will include:
+### - Group basic info (id, name, createdAt)
+### - List of users assigned to the group (id, email)
+### - List of endpoints assigned to the group (id, description, path, method)
+
 ###
 ### ===============================================

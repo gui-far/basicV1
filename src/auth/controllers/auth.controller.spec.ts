@@ -4,6 +4,7 @@ import { SignupUseCase } from '../usecases/signup.usecase'
 import { SigninUseCase } from '../usecases/signin.usecase'
 import { SignoutUseCase } from '../usecases/signout.usecase'
 import { SetAdminUseCase } from '../usecases/set-admin.usecase'
+import { ListUsersUseCase } from '../usecases/list-users.usecase'
 import { SignupDto } from '../dto/signup.dto'
 import { SigninDto } from '../dto/signin.dto'
 
@@ -13,6 +14,7 @@ describe('AuthController', () => {
   let signinUseCase: SigninUseCase
   let signoutUseCase: SignoutUseCase
   let setAdminUseCase: SetAdminUseCase
+  let listUsersUseCase: ListUsersUseCase
 
   beforeEach(() => {
     signupUseCase = {
@@ -31,11 +33,16 @@ describe('AuthController', () => {
       execute: vi.fn(),
     } as any
 
+    listUsersUseCase = {
+      execute: vi.fn(),
+    } as any
+
     authController = new AuthController(
       signupUseCase,
       signinUseCase,
       signoutUseCase,
       setAdminUseCase,
+      listUsersUseCase,
     )
   })
 
