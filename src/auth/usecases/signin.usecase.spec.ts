@@ -100,6 +100,7 @@ describe('SigninUseCase', () => {
         .toEqual({
           accessToken,
           refreshToken,
+          userId: mockUser.id,
         })
 
       expect(prismaService.user.findUnique)

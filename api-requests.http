@@ -400,31 +400,371 @@ POST {{baseUrl}}/auth/signout
 Authorization: Bearer {{user2Token}}
 
 ### ===============================================
+### 7. GROUP ENDPOINTS
+### ===============================================
+
+### 7.1 Create Group - Complete Flow
+
+### Step 1: Create admin user (first user, auto admin)
+# @name groupAdminSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "groupadmin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### Step 2: Admin signs in
+# @name groupAdminSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "groupadmin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### Step 3: Extract admin token
+@groupAdminToken = {{groupAdminSignin.response.body.accessToken}}
+@groupAdminUserId = {{groupAdminSignin.response.body.userId}}
+
+###
+
+### Step 4: Create a regular user
+# @name groupRegularUserSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "groupuser@example.com",
+  "password": "user123"
+}
+
+###
+
+### Step 5: Regular user signs in
+# @name groupRegularUserSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "groupuser@example.com",
+  "password": "user123"
+}
+
+###
+
+### Step 6: Extract regular user token and ID
+@groupRegularUserToken = {{groupRegularUserSignin.response.body.accessToken}}
+@groupRegularUserId = {{groupRegularUserSignin.response.body.userId}}
+
+###
+
+### 7.2 Create Group as Admin (Success - 201)
+# @name createGroup
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Development Team"
+}
+
+###
+
+### Step 7: Extract group ID
+@groupId = {{createGroup.response.body.id}}
+
+###
+
+### 7.3 Create Another Group (Success - 201)
+# @name createGroup2
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "QA Team"
+}
+
+###
+
+@groupId2 = {{createGroup2.response.body.id}}
+
+###
+
+### 7.4 Create Group - Duplicate Name (409 Conflict)
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Development Team"
+}
+
+###
+
+### 7.5 Create Group - No Token (401 Unauthorized)
+POST {{baseUrl}}/group/create
+Content-Type: {{contentType}}
+
+{
+  "name": "Test Group"
+}
+
+###
+
+### 7.6 Create Group - Non-Admin (403 Forbidden)
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{groupRegularUserToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Test Group"
+}
+
+###
+
+### 7.7 Create Group - Missing Name (400 Bad Request)
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": ""
+}
+
+###
+
+### ===============================================
+### 8. ADD USER TO GROUP
+### ===============================================
+
+### 8.1 Add User to Group as Admin (Success - 201)
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 8.2 Add User to Group - Already in Group (409 Conflict)
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 8.3 Add User to Group - User Not Found (404 Not Found)
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "non-existent-user-id",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 8.4 Add User to Group - Group Not Found (404 Not Found)
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "non-existent-group-id"
+}
+
+###
+
+### 8.5 Add User to Group - No Token (401 Unauthorized)
+POST {{baseUrl}}/group/add-user
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 8.6 Add User to Group - Non-Admin (403 Forbidden)
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{groupRegularUserToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### ===============================================
+### 9. REMOVE USER FROM GROUP
+### ===============================================
+
+### 9.1 Remove User from Group as Admin (Success - 201)
+POST {{baseUrl}}/group/remove-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 9.2 Remove User from Group - User Not in Group (404 Not Found)
+POST {{baseUrl}}/group/remove-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 9.3 Remove User from Group - No Token (401 Unauthorized)
+POST {{baseUrl}}/group/remove-user
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 9.4 Remove User from Group - Non-Admin (403 Forbidden)
+POST {{baseUrl}}/group/remove-user
+Authorization: Bearer {{groupRegularUserToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### ===============================================
+### 10. DELETE GROUP
+### ===============================================
+
+### 10.1 Delete Group with No Users (Success - 200)
+DELETE {{baseUrl}}/group/{{groupId2}}
+Authorization: Bearer {{groupAdminToken}}
+
+###
+
+### 10.2 Add User to Group (for delete with users test)
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 10.3 Delete Group with Users (400 Bad Request)
+DELETE {{baseUrl}}/group/{{groupId}}
+Authorization: Bearer {{groupAdminToken}}
+
+###
+
+### 10.4 Remove User from Group (for successful delete)
+POST {{baseUrl}}/group/remove-user
+Authorization: Bearer {{groupAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{groupRegularUserId}}",
+  "groupId": "{{groupId}}"
+}
+
+###
+
+### 10.5 Delete Group Successfully (200 OK)
+DELETE {{baseUrl}}/group/{{groupId}}
+Authorization: Bearer {{groupAdminToken}}
+
+###
+
+### 10.6 Delete Group - Group Not Found (404 Not Found)
+DELETE {{baseUrl}}/group/non-existent-group-id
+Authorization: Bearer {{groupAdminToken}}
+
+###
+
+### 10.7 Delete Group - No Token (401 Unauthorized)
+DELETE {{baseUrl}}/group/{{groupId}}
+
+###
+
+### 10.8 Delete Group - Non-Admin (403 Forbidden)
+DELETE {{baseUrl}}/group/{{groupId}}
+Authorization: Bearer {{groupRegularUserToken}}
+
+###
+
+### ===============================================
 ### NOTES:
 ### ===============================================
 ###
 ### Expected Responses:
-### - 201: User created successfully (signup)
-### - 200: Success with data (signin, signout, set-admin)
-### - 400: Validation error (bad request)
+### - 201: User created successfully (signup), resource created (group, membership)
+### - 200: Success with data (signin, signout, set-admin, delete group)
+### - 400: Validation error (bad request, group has users)
 ### - 401: Unauthorized (invalid credentials or token)
 ### - 403: Forbidden (non-admin trying to access admin endpoint)
-### - 404: Not Found (user not found)
-### - 409: Conflict (duplicate email)
+### - 404: Not Found (user, group, or membership not found)
+### - 409: Conflict (duplicate email, group name, or membership)
 ###
 ### Admin Functionality:
 ### - First user to signup automatically becomes admin
 ### - Only admins can promote other users to admin
+### - Only admins can create groups
+### - Only admins can add/remove users to/from groups
+### - Only admins can delete groups (only if group has no users)
 ### - Admin status is included in JWT tokens (isAdmin field)
-### - Set-admin endpoint requires both JWT authentication and admin role
+###
+### Group Functionality:
+### - Groups have unique names
+### - One user can be in multiple groups
+### - One group can have multiple users
+### - Groups can only be deleted if they have no users
+### - Many-to-many relationship via UserGroup junction table
 ###
 ### Tips:
 ### 1. Run requests in order for integration flow
-### 2. Variables (@accessToken, @adminToken) are auto-saved between requests
+### 2. Variables (@accessToken, @adminToken, @groupId) are auto-saved between requests
 ### 3. Use "# @name" to reference responses in other requests
 ### 4. Check the response panel for detailed error messages
 ### 5. Server must be running before sending requests
-### 6. For set-admin testing, you'll need to get userId from database
-###    or decode the JWT token to extract the user's ID
+### 6. User IDs are now returned in signin response (userId field)
+### 7. Group IDs are returned when creating groups
 ###
 ### ===============================================

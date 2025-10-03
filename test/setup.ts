@@ -15,6 +15,14 @@ export async function cleanDatabase(): Promise<void> {
   const prisma = await getPrismaTestClient()
 
   await prisma
+    .userGroup
+    .deleteMany({})
+
+  await prisma
+    .group
+    .deleteMany({})
+
+  await prisma
     .user
     .deleteMany({})
 }

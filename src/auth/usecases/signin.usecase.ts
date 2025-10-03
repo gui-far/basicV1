@@ -61,6 +61,6 @@ export class SigninUseCase {
         data: { refreshToken },
       })
 
-    return { accessToken, refreshToken }
+    return { accessToken, refreshToken, userId: user.id }
   }
 }

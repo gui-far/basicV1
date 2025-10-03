@@ -96,6 +96,7 @@ describe('AuthController', () => {
       const expectedResult = {
         accessToken: 'accessToken123',
         refreshToken: 'refreshToken456',
+        userId: 'user-123',
       }
 
       vi
