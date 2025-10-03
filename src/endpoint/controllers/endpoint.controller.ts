@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Body, Param, UseGuards } from '@nestjs/common'
+import { Controller, Post, Delete, Body, Param } from '@nestjs/common'
 import { CreateEndpointUseCase } from '../usecases/create-endpoint.usecase'
 import { AddEndpointToGroupUseCase } from '../usecases/add-endpoint-to-group.usecase'
 import { RemoveEndpointFromGroupUseCase } from '../usecases/remove-endpoint-from-group.usecase'
@@ -7,8 +7,6 @@ import { CreateEndpointDto } from '../dto/create-endpoint.dto'
 import { AddEndpointToGroupDto } from '../dto/add-endpoint-to-group.dto'
 import { RemoveEndpointFromGroupDto } from '../dto/remove-endpoint-from-group.dto'
 import { EndpointEntity } from '../entities/endpoint.entity'
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
-import { AdminGuard } from '../../auth/guards/admin.guard'
 
 @Controller('endpoint')
 export class EndpointController {
@@ -20,7 +18,6 @@ export class EndpointController {
   ) {}
 
   @Post('create')
-  @UseGuards(JwtAuthGuard, AdminGuard)
   async createEndpoint(@Body() createEndpointDto: CreateEndpointDto): Promise<EndpointEntity> {
     return this
       .createEndpointUseCase
@@ -28,7 +25,6 @@ export class EndpointController {
   }
 
   @Post('add-to-group')
-  @UseGuards(JwtAuthGuard, AdminGuard)
   async addEndpointToGroup(@Body() addEndpointToGroupDto: AddEndpointToGroupDto): Promise<{ message: string }> {
     return this
       .addEndpointToGroupUseCase
@@ -36,7 +32,6 @@ export class EndpointController {
   }
 
   @Post('remove-from-group')
-  @UseGuards(JwtAuthGuard, AdminGuard)
   async removeEndpointFromGroup(@Body() removeEndpointFromGroupDto: RemoveEndpointFromGroupDto): Promise<{ message: string }> {
     return this
       .removeEndpointFromGroupUseCase
@@ -44,7 +39,6 @@ export class EndpointController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, AdminGuard)
   async deleteEndpoint(@Param('id') id: string): Promise<{ message: string }> {
     return this
       .deleteEndpointUseCase

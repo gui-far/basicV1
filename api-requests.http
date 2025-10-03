@@ -1098,6 +1098,358 @@ Authorization: Bearer {{endpointRegularUserToken}}
 ###
 
 ### ===============================================
+### 15. ENDPOINT ACCESS CONTROL (PROMPT 009)
+### ===============================================
+### This section demonstrates the dynamic endpoint access control guard
+### Access Rules:
+### - Admins: Access ALL endpoints
+### - Public Endpoints: Accessible to everyone
+### - Regular Users: Only access endpoints in groups they belong to
+
+### 15.1 Setup: Create Test Users and Data
+
+### Step 1: Create admin user
+# @name accessControlAdmin
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "accessadmin@example.com",
+  "password": "admin123"
+}
+
+###
+
+# @name accessControlAdminSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "accessadmin@example.com",
+  "password": "admin123"
+}
+
+###
+
+@accessAdminToken = {{accessControlAdminSignin.response.body.accessToken}}
+@accessAdminUserId = {{accessControlAdminSignin.response.body.userId}}
+
+###
+
+### Step 2: Create two regular users
+# @name accessUser1Signup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "accessuser1@example.com",
+  "password": "user123"
+}
+
+###
+
+# @name accessUser1Signin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "accessuser1@example.com",
+  "password": "user123"
+}
+
+###
+
+@accessUser1Token = {{accessUser1Signin.response.body.accessToken}}
+@accessUser1Id = {{accessUser1Signin.response.body.userId}}
+
+###
+
+# @name accessUser2Signup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "accessuser2@example.com",
+  "password": "user123"
+}
+
+###
+
+# @name accessUser2Signin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "accessuser2@example.com",
+  "password": "user123"
+}
+
+###
+
+@accessUser2Token = {{accessUser2Signin.response.body.accessToken}}
+@accessUser2Id = {{accessUser2Signin.response.body.userId}}
+
+###
+
+### Step 3: Create Groups
+# @name accessGroup1
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Developers Group"
+}
+
+###
+
+@accessGroupId1 = {{accessGroup1.response.body.id}}
+
+###
+
+# @name accessGroup2
+POST {{baseUrl}}/group/create
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Marketing Group"
+}
+
+###
+
+@accessGroupId2 = {{accessGroup2.response.body.id}}
+
+###
+
+### Step 4: Create Endpoints (Protected and Public)
+# @name protectedEndpoint1
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": "Get user profile",
+  "path": "/api/users/profile",
+  "method": "GET",
+  "isPublic": false
+}
+
+###
+
+@protectedEndpointId1 = {{protectedEndpoint1.response.body.id}}
+
+###
+
+# @name protectedEndpoint2
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": "Get analytics data",
+  "path": "/api/analytics",
+  "method": "GET",
+  "isPublic": false
+}
+
+###
+
+@protectedEndpointId2 = {{protectedEndpoint2.response.body.id}}
+
+###
+
+# @name publicEndpoint
+POST {{baseUrl}}/endpoint/create
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "description": "Public health check",
+  "path": "/api/health",
+  "method": "GET",
+  "isPublic": true
+}
+
+###
+
+@publicEndpointId = {{publicEndpoint.response.body.id}}
+
+###
+
+### Step 5: Add User1 to Developers Group
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{accessUser1Id}}",
+  "groupId": "{{accessGroupId1}}"
+}
+
+###
+
+### Step 6: Add User2 to Marketing Group
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{accessUser2Id}}",
+  "groupId": "{{accessGroupId2}}"
+}
+
+###
+
+### Step 7: Add Endpoint1 to Developers Group
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{protectedEndpointId1}}",
+  "groupId": "{{accessGroupId1}}"
+}
+
+###
+
+### Step 8: Add Endpoint2 to Marketing Group
+POST {{baseUrl}}/endpoint/add-to-group
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "endpointId": "{{protectedEndpointId2}}",
+  "groupId": "{{accessGroupId2}}"
+}
+
+###
+
+### ===============================================
+### 15.2 Test Scenarios
+### ===============================================
+
+### Scenario 1: Admin can access ANY endpoint (even not in any group)
+### Expected: 200 OK (admin bypasses all checks)
+GET {{baseUrl}}/api/users/profile
+Authorization: Bearer {{accessAdminToken}}
+
+###
+
+GET {{baseUrl}}/api/analytics
+Authorization: Bearer {{accessAdminToken}}
+
+###
+
+### Scenario 2: Regular User1 can access endpoint in their group (Developers)
+### Expected: 200 OK (user1 is in Developers group, endpoint1 is in Developers group)
+GET {{baseUrl}}/api/users/profile
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+### Scenario 3: Regular User1 CANNOT access endpoint NOT in their group
+### Expected: 403 Forbidden (user1 is NOT in Marketing group)
+GET {{baseUrl}}/api/analytics
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+### Scenario 4: Regular User2 can access endpoint in their group (Marketing)
+### Expected: 200 OK (user2 is in Marketing group, endpoint2 is in Marketing group)
+GET {{baseUrl}}/api/analytics
+Authorization: Bearer {{accessUser2Token}}
+
+###
+
+### Scenario 5: Regular User2 CANNOT access endpoint NOT in their group
+### Expected: 403 Forbidden (user2 is NOT in Developers group)
+GET {{baseUrl}}/api/users/profile
+Authorization: Bearer {{accessUser2Token}}
+
+###
+
+### Scenario 6: Anyone can access PUBLIC endpoints (even unauthenticated)
+### Expected: 200 OK (public endpoint, no auth required)
+GET {{baseUrl}}/api/health
+
+###
+
+### Scenario 7: Authenticated users can access public endpoints
+### Expected: 200 OK
+GET {{baseUrl}}/api/health
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+GET {{baseUrl}}/api/health
+Authorization: Bearer {{accessUser2Token}}
+
+###
+
+### Scenario 8: Unauthenticated user CANNOT access protected endpoint
+### Expected: 401 Unauthorized
+GET {{baseUrl}}/api/users/profile
+
+###
+
+### Scenario 9: Endpoints NOT in database allow access (backward compatibility)
+### Expected: 200 OK or 404 (depending on if route exists, but guard allows it)
+GET {{baseUrl}}/some/unregistered/endpoint
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+### ===============================================
+### 15.3 Dynamic Access Change
+### ===============================================
+
+### Scenario 10: Add User1 to Marketing Group
+POST {{baseUrl}}/group/add-user
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{accessUser1Id}}",
+  "groupId": "{{accessGroupId2}}"
+}
+
+###
+
+### Now User1 can access both endpoints
+### Expected: 200 OK (user1 now has access via Marketing group)
+GET {{baseUrl}}/api/analytics
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+### Scenario 11: Remove User1 from Developers Group
+POST {{baseUrl}}/group/remove-user
+Authorization: Bearer {{accessAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "{{accessUser1Id}}",
+  "groupId": "{{accessGroupId1}}"
+}
+
+###
+
+### Now User1 CANNOT access Developers endpoint
+### Expected: 403 Forbidden (user1 no longer in Developers group)
+GET {{baseUrl}}/api/users/profile
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+### But User1 can still access Marketing endpoint
+### Expected: 200 OK
+GET {{baseUrl}}/api/analytics
+Authorization: Bearer {{accessUser1Token}}
+
+###
+
+### ===============================================
 ### NOTES:
 ### ===============================================
 ###
@@ -1105,8 +1457,8 @@ Authorization: Bearer {{endpointRegularUserToken}}
 ### - 201: User created successfully (signup), resource created (group, membership, endpoint)
 ### - 200: Success with data (signin, signout, set-admin, delete group, delete endpoint)
 ### - 400: Validation error (bad request, group has users, endpoint has groups)
-### - 401: Unauthorized (invalid credentials or token)
-### - 403: Forbidden (non-admin trying to access admin endpoint)
+### - 401: Unauthorized (invalid credentials or token, missing authentication)
+### - 403: Forbidden (user does not have access to endpoint)
 ### - 404: Not Found (user, group, membership, endpoint not found)
 ### - 409: Conflict (duplicate email, group name, membership, or endpoint-group relation)
 ###
@@ -1120,6 +1472,7 @@ Authorization: Bearer {{endpointRegularUserToken}}
 ### - Only admins can add/remove endpoints to/from groups
 ### - Only admins can delete endpoints (only if endpoint not in any groups)
 ### - Admin status is included in JWT tokens (isAdmin field)
+### - **Admins have access to ALL endpoints (bypass endpoint access control)**
 ###
 ### Group Functionality:
 ### - Groups have unique names
@@ -1135,6 +1488,14 @@ Authorization: Bearer {{endpointRegularUserToken}}
 ### - Endpoints can only be deleted if they are not in any groups
 ### - Many-to-many relationship via GroupEndpoint junction table
 ###
+### Endpoint Access Control (NEW):
+### - **Admins**: Access to ALL endpoints (bypass all checks)
+### - **Public Endpoints** (isPublic=true): Accessible to everyone (authenticated or not)
+### - **Regular Users**: Only access endpoints in groups they belong to
+### - **Unauthenticated**: Can only access public endpoints
+### - **Endpoints not in database**: Allow access (backward compatibility)
+### - Access is dynamic: Adding/removing users from groups immediately affects access
+###
 ### Tips:
 ### 1. Run requests in order for integration flow
 ### 2. Variables (@accessToken, @adminToken, @groupId, @endpointId) are auto-saved between requests
@@ -1144,5 +1505,7 @@ Authorization: Bearer {{endpointRegularUserToken}}
 ### 6. User IDs are now returned in signin response (userId field)
 ### 7. Group IDs are returned when creating groups
 ### 8. Endpoint IDs are returned when creating endpoints
+### 9. Test endpoint access control by trying to access endpoints with different user tokens
+### 10. The guard checks: isPublic → user role → group membership dynamically
 ###
 ### ===============================================
