@@ -1,0 +1,430 @@
+### ===============================================
+### Authentication API - REST Client Requests
+### ===============================================
+###
+### Prerequisites:
+### 1. Install "REST Client" extension in VS Code
+### 2. Start the server: npm run start:dev
+### 3. Server must be running on http://localhost:3000
+###
+### Usage:
+### - Click "Send Request" above each request
+### - Variables are saved automatically between requests
+### - Access token from signin is used in signout
+###
+### ===============================================
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### ===============================================
+### 1. SIGNUP ENDPOINT
+### ===============================================
+
+### 1.1 Create New User (Success)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### 1.2 Signup with Different User
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "another@example.com",
+  "password": "secure123"
+}
+
+### 1.3 Signup - Duplicate Email (409 Conflict)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### 1.4 Signup - Invalid Email (400 Bad Request)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "invalid-email-format",
+  "password": "password123"
+}
+
+### 1.5 Signup - Short Password (400 Bad Request)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "12345"
+}
+
+### 1.6 Signup - Missing Email (400 Bad Request)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "password": "password123"
+}
+
+### 1.7 Signup - Missing Password (400 Bad Request)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com"
+}
+
+### ===============================================
+### 2. SIGNIN ENDPOINT
+### ===============================================
+
+### 2.1 Signin with Valid Credentials (Success)
+### Note: Copy the accessToken from response for signout request
+# @name signin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### 2.2 Save Access Token from Response
+@accessToken = {{signin.response.body.accessToken}}
+@refreshToken = {{signin.response.body.refreshToken}}
+
+### 2.3 Signin - Wrong Password (401 Unauthorized)
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com",
+  "password": "wrongpassword"
+}
+
+### 2.4 Signin - Non-existent User (401 Unauthorized)
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "nonexistent@example.com",
+  "password": "password123"
+}
+
+### 2.5 Signin - Missing Email (400 Bad Request)
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "password": "password123"
+}
+
+### 2.6 Signin - Missing Password (400 Bad Request)
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com"
+}
+
+### ===============================================
+### 3. SIGNOUT ENDPOINT
+### ===============================================
+
+### 3.1 Signout with Valid Token (Success)
+### Note: Run signin request first to get accessToken
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{accessToken}}
+
+### 3.2 Signout - No Token (401 Unauthorized)
+POST {{baseUrl}}/auth/signout
+
+### 3.3 Signout - Invalid Token (401 Unauthorized)
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer invalid-token-here
+
+### 3.4 Signout - Malformed Authorization Header (401 Unauthorized)
+POST {{baseUrl}}/auth/signout
+Authorization: InvalidFormat
+
+### ===============================================
+### 4. SET ADMIN ENDPOINT
+### ===============================================
+
+### 4.1 Set Admin - Complete Flow (Admin promotes another user)
+
+### Step 1: Create first user (will be admin automatically)
+# @name adminSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### Step 2: Admin signs in to get token
+# @name adminSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### Step 3: Extract admin token
+@adminToken = {{adminSignin.response.body.accessToken}}
+
+###
+
+### Step 4: Create second user (regular user, not admin)
+# @name regularUserSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "regular@example.com",
+  "password": "regular123"
+}
+
+###
+
+### Step 5: Sign in as regular user to get their userId from token
+# @name regularUserSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "regular@example.com",
+  "password": "regular123"
+}
+
+###
+
+### Note: In a real scenario, you'd decode the JWT or have an endpoint to get user info
+### For testing, you'll need to get the userId from your database
+### Replace 'USER_ID_HERE' with actual userId from database
+
+### Step 6: Admin promotes regular user to admin (Success - 200)
+POST {{baseUrl}}/auth/set-admin
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "USER_ID_HERE"
+}
+
+### 4.2 Set Admin - No Token (401 Unauthorized)
+POST {{baseUrl}}/auth/set-admin
+Content-Type: {{contentType}}
+
+{
+  "userId": "some-user-id"
+}
+
+### 4.3 Set Admin - Invalid Token (401 Unauthorized)
+POST {{baseUrl}}/auth/set-admin
+Authorization: Bearer invalid-token-here
+Content-Type: {{contentType}}
+
+{
+  "userId": "some-user-id"
+}
+
+### 4.4 Set Admin - Non-Admin User Attempts (403 Forbidden)
+### Note: This uses a regular user's token (not admin)
+### First, sign in as a regular user (second or third user created)
+
+# @name nonAdminSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "another@example.com",
+  "password": "secure123"
+}
+
+###
+
+@nonAdminToken = {{nonAdminSignin.response.body.accessToken}}
+
+###
+
+### Now try to set admin with non-admin token
+POST {{baseUrl}}/auth/set-admin
+Authorization: Bearer {{nonAdminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "some-user-id"
+}
+
+### 4.5 Set Admin - User Not Found (404 Not Found)
+POST {{baseUrl}}/auth/set-admin
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": "non-existent-user-id-12345"
+}
+
+### 4.6 Set Admin - Missing userId (400 Bad Request)
+POST {{baseUrl}}/auth/set-admin
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+}
+
+### 4.7 Set Admin - Invalid userId Type (400 Bad Request)
+POST {{baseUrl}}/auth/set-admin
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": 123456
+}
+
+### 4.8 Set Admin - Empty userId (400 Bad Request)
+POST {{baseUrl}}/auth/set-admin
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "userId": ""
+}
+
+### ===============================================
+### 5. INTEGRATION FLOW
+### ===============================================
+
+### 5.1 Complete Flow: Signup → Signin → Signout
+
+### Step 1: Create Account
+# @name flowSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "flow@example.com",
+  "password": "password123"
+}
+
+###
+
+### Step 2: Sign In
+# @name flowSignin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "flow@example.com",
+  "password": "password123"
+}
+
+###
+
+### Step 3: Get Token from Signin
+@flowAccessToken = {{flowSignin.response.body.accessToken}}
+
+###
+
+### Step 4: Sign Out
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{flowAccessToken}}
+
+###
+
+### Step 5: Try to Sign In Again (Should Work)
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "flow@example.com",
+  "password": "password123"
+}
+
+### ===============================================
+### 6. TESTING SCENARIOS
+### ===============================================
+
+### 6.1 Test Multiple Users
+# @name user1Signin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+###
+
+# @name user2Signin
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "another@example.com",
+  "password": "secure123"
+}
+
+###
+
+@user1Token = {{user1Signin.response.body.accessToken}}
+@user2Token = {{user2Signin.response.body.accessToken}}
+
+###
+
+### Signout User 1
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{user1Token}}
+
+###
+
+### Signout User 2
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{user2Token}}
+
+### ===============================================
+### NOTES:
+### ===============================================
+###
+### Expected Responses:
+### - 201: User created successfully (signup)
+### - 200: Success with data (signin, signout, set-admin)
+### - 400: Validation error (bad request)
+### - 401: Unauthorized (invalid credentials or token)
+### - 403: Forbidden (non-admin trying to access admin endpoint)
+### - 404: Not Found (user not found)
+### - 409: Conflict (duplicate email)
+###
+### Admin Functionality:
+### - First user to signup automatically becomes admin
+### - Only admins can promote other users to admin
+### - Admin status is included in JWT tokens (isAdmin field)
+### - Set-admin endpoint requires both JWT authentication and admin role
+###
+### Tips:
+### 1. Run requests in order for integration flow
+### 2. Variables (@accessToken, @adminToken) are auto-saved between requests
+### 3. Use "# @name" to reference responses in other requests
+### 4. Check the response panel for detailed error messages
+### 5. Server must be running before sending requests
+### 6. For set-admin testing, you'll need to get userId from database
+###    or decode the JWT token to extract the user's ID
+###
+### ===============================================
