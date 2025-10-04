@@ -1561,3 +1561,221 @@ Authorization: Bearer {{accessAdminToken}}
 
 ###
 ### ===============================================
+
+### ===============================================
+### 18. PASSWORD RESET (FORGOT PASSWORD)
+### ===============================================
+### Description: Implements forgot password functionality with email-based token reset
+
+### 18.1 Forgot Password - Send Reset Email (Success)
+### Expected: 201 Created with success message
+### An email will be sent to the user with a reset token
+# @name forgotPassword
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com"
+}
+
+###
+
+### 18.2 Forgot Password - User Not Found (404 Not Found)
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "email": "nonexistent@example.com"
+}
+
+###
+
+### 18.3 Forgot Password - Invalid Email Format (400 Bad Request)
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "email": "invalid-email"
+}
+
+###
+
+### 18.4 Forgot Password - Missing Email (400 Bad Request)
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+}
+
+###
+
+### ===============================================
+### 19. RESET PASSWORD
+### ===============================================
+### Description: Reset password using token received via email
+
+### NOTE: To test these endpoints, you need to:
+### 1. Configure your Gmail credentials in .env file:
+###    - MAIL_USER="your-email@gmail.com"
+###    - MAIL_PASSWORD="your-app-password"
+###    - Get app password from: https://myaccount.google.com/apppasswords
+### 2. Send a forgot-password request
+### 3. Check your email for the reset token
+### 4. Copy the token from the email and use it below
+
+### 19.1 Reset Password with Valid Token (Success)
+### Expected: 201 Created with success message
+### Replace TOKEN_FROM_EMAIL with the actual token from your email
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "token": "TOKEN_FROM_EMAIL",
+  "newPassword": "newpassword123"
+}
+
+###
+
+### 19.2 Reset Password - Invalid Token (400 Bad Request)
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "token": "invalid-token-12345",
+  "newPassword": "newpassword123"
+}
+
+###
+
+### 19.3 Reset Password - Expired Token (400 Bad Request)
+### Note: Tokens expire after 60 minutes by default (configurable via TOKEN_EXPIRATION_MINUTES)
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "token": "expired-token-from-email",
+  "newPassword": "newpassword123"
+}
+
+###
+
+### 19.4 Reset Password - Short Password (400 Bad Request)
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "token": "TOKEN_FROM_EMAIL",
+  "newPassword": "12345"
+}
+
+###
+
+### 19.5 Reset Password - Missing Fields (400 Bad Request)
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "token": "TOKEN_FROM_EMAIL"
+}
+
+###
+
+### ===============================================
+### 20. COMPLETE PASSWORD RESET FLOW
+### ===============================================
+### Description: Full flow demonstrating password reset
+
+### Step 1: Create a test user
+# @name resetFlowSignup
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "resettest@example.com",
+  "password": "oldpassword123"
+}
+
+###
+
+### Step 2: Sign in with old password
+# @name resetFlowSignin1
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "resettest@example.com",
+  "password": "oldpassword123"
+}
+
+###
+
+@resetFlowToken1 = {{resetFlowSignin1.response.body.accessToken}}
+
+###
+
+### Step 3: Verify signin works (optional)
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{resetFlowToken1}}
+
+###
+
+### Step 4: Request password reset
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: {{contentType}}
+
+{
+  "email": "resettest@example.com"
+}
+
+###
+
+### Step 5: Check your email for the token
+### Copy the token from the email and paste it in the next request
+
+###
+
+### Step 6: Reset password with token from email
+POST {{baseUrl}}/auth/reset-password
+Content-Type: {{contentType}}
+
+{
+  "token": "PASTE_TOKEN_FROM_EMAIL_HERE",
+  "newPassword": "newpassword456"
+}
+
+###
+
+### Step 7: Try to sign in with OLD password (should fail)
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "resettest@example.com",
+  "password": "oldpassword123"
+}
+
+###
+
+### Step 8: Sign in with NEW password (should work)
+# @name resetFlowSignin2
+POST {{baseUrl}}/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "resettest@example.com",
+  "password": "newpassword456"
+}
+
+###
+
+@resetFlowToken2 = {{resetFlowSignin2.response.body.accessToken}}
+
+###
+
+### Step 9: Verify new signin works
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{resetFlowToken2}}
+
+###
+
+### ===============================================

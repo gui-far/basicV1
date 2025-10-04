@@ -5,6 +5,8 @@ import { SigninUseCase } from '../usecases/signin.usecase'
 import { SignoutUseCase } from '../usecases/signout.usecase'
 import { SetAdminUseCase } from '../usecases/set-admin.usecase'
 import { ListUsersUseCase } from '../usecases/list-users.usecase'
+import { ForgotPasswordUseCase } from '../usecases/forgot-password.usecase'
+import { ResetPasswordUseCase } from '../usecases/reset-password.usecase'
 import { SignupDto } from '../dto/signup.dto'
 import { SigninDto } from '../dto/signin.dto'
 
@@ -15,6 +17,8 @@ describe('AuthController', () => {
   let signoutUseCase: SignoutUseCase
   let setAdminUseCase: SetAdminUseCase
   let listUsersUseCase: ListUsersUseCase
+  let forgotPasswordUseCase: ForgotPasswordUseCase
+  let resetPasswordUseCase: ResetPasswordUseCase
 
   beforeEach(() => {
     signupUseCase = {
@@ -37,12 +41,22 @@ describe('AuthController', () => {
       execute: vi.fn(),
     } as any
 
+    forgotPasswordUseCase = {
+      execute: vi.fn(),
+    } as any
+
+    resetPasswordUseCase = {
+      execute: vi.fn(),
+    } as any
+
     authController = new AuthController(
       signupUseCase,
       signinUseCase,
       signoutUseCase,
       setAdminUseCase,
       listUsersUseCase,
+      forgotPasswordUseCase,
+      resetPasswordUseCase,
     )
   })
 

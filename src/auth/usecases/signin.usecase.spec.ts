@@ -52,6 +52,7 @@ describe('SigninUseCase', () => {
       email: signinDto.email,
       password: 'hashedPassword',
       isAdmin: false,
+      isActivated: false,
       refreshToken: null,
       createdAt: new Date(),
       updatedAt: new Date(),

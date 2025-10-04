@@ -18,10 +18,12 @@ model User {
   email        String      @unique
   password     String
   isAdmin      Boolean     @default(false)
+  isActivated  Boolean     @default(false)
   refreshToken String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   userGroups   UserGroup[]
+  tokens       Token[]
 
   @@map("users")
 }
@@ -74,4 +76,23 @@ model GroupEndpoint {
 
   @@unique([groupId, endpointId])
   @@map("group_endpoints")
+}
+
+enum TokenType {
+  ACTIVATION
+  PASSWORD_RESET
+  ACTION
+}
+
+model Token {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  type      TokenType
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tokens")
 }

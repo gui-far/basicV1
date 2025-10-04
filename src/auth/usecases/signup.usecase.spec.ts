@@ -52,6 +52,7 @@ describe('SignupUseCase', () => {
           email: signupDto.email,
           password: hashedPassword,
           isAdmin: false,
+      isActivated: false,
           refreshToken: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -77,6 +78,7 @@ describe('SignupUseCase', () => {
             email: signupDto.email,
             password: hashedPassword,
             isAdmin: false,
+      isActivated: false,
           },
         })
     })
@@ -89,6 +91,7 @@ describe('SignupUseCase', () => {
           email: signupDto.email,
           password: 'hashedPassword',
           isAdmin: false,
+      isActivated: false,
           refreshToken: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -134,6 +137,7 @@ describe('SignupUseCase', () => {
           email: signupDto.email,
           password: hashedPassword,
           isAdmin: false,
+      isActivated: false,
           refreshToken: null,
           createdAt: new Date(),
           updatedAt: new Date(),

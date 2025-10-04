@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Projetos/TesteClaude/frontend/src/services/**)",
+      "Read(//c/Projetos/TesteClaude/**)",
+      "Bash(npm run build:*)",
+      "Bash(pkill:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

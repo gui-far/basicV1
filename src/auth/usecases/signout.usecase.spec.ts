@@ -26,6 +26,7 @@ describe('SignoutUseCase', () => {
       email: 'test@example.com',
       password: 'hashedPassword',
       isAdmin: false,
+      isActivated: false,
       refreshToken: 'refreshToken123',
       createdAt: new Date(),
       updatedAt: new Date(),
